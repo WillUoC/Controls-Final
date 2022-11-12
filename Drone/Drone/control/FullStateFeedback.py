@@ -39,7 +39,11 @@ class FeedbackLoop:
     def integrate_error(self, error):
         self.integrator = self.integrator + (self.Ts/2.0)*(error + self.error_d1)
         self.error_d1 = error
-
+    
+    def reset_integrator(self):
+        self.integrator = 0.0
+        self.error_d1 = 0.0
+    
     def saturate(self, u, ulimit, dlimit):
         if u > ulimit:
             u = ulimit

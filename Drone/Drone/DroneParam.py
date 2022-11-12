@@ -82,17 +82,112 @@ Ahi = np.concatenate((
 
 Bhi = np.concatenate((Bh, np.array([[0.0]])), axis=0)
 
-## gain calculation
 
+## Yaw Loop Dynamics
+Apsi = np.array([
+    [0.0, 1.0],
+    [0.0, 0.0]
+])
+
+Bpsi = np.array([
+    [0.0],
+    [1/jc]
+])
+
+Crpsi = np.array([
+    [1.0, 0.0]
+])
+
+Aipsi = np.concatenate((
+    np.concatenate((Apsi, np.zeros((2, 1))), axis=1),
+    np.concatenate((-Crpsi, np.array([[0.0]])), axis=1)),
+    axis=0)
+
+Bipsi = np.concatenate((Bpsi, np.array([[0.0]])), axis=0)
+
+## Pitch Loop Dynamics
+Aal = np.array([
+    [0.0, 1.0],
+    [0.0, 0.0]
+])
+
+Bal = np.array([
+    [0.0],
+    [1/jc]
+])
+
+Cral = np.array([
+    [1.0, 0.0]
+])
+
+Aial = np.concatenate((
+    np.concatenate((Aal, np.zeros((2, 1))), axis=1),
+    np.concatenate((-Cral, np.array([[0.0]])), axis=1)),
+    axis=0)
+
+Bial = np.concatenate((Bal, np.array([[0.0]])), axis=0)
+
+
+## Roll Loop Dynamics
+Ath = np.array([
+    [0.0, 1.0],
+    [0.0, 0.0]
+])
+
+Bth = np.array([
+    [0.0],
+    [1/jc]
+])
+
+Crth = np.array([
+    [1.0, 0.0]
+])
+
+Aith = np.concatenate((
+    np.concatenate((Ath, np.zeros((2, 1))), axis=1),
+    np.concatenate((-Crth, np.array([[0.0]])), axis=1)),
+    axis=0)
+
+Bith = np.concatenate((Bth, np.array([[0.0]])), axis=0)
+
+
+## gain calculation
 tr_h = 1.0
 zeta_h = 0.707
 
+tr_psi = 0.5
+zeta_psi = 0.707
+
+tr_al = 0.1
+zeta_al = 0.707
+
+tr_th = 0.1
+zeta_th = 0.707
+
 h_integrator = -1.0
+psi_integrator = -1.0
+al_integrator = -1.0
+th_integrator = -1.0
+
+
 
 wn_h = 2.2/tr_h # natural frequency for position
+wn_psi = 2.2/tr_psi
+wn_al = 2.2/tr_al
+wn_th = 2.2/tr_th
+
 
 des_char_poly_h = np.convolve([1, 2*zeta_h*wn_h, wn_h**2], np.poly(np.array([h_integrator])))
 des_poles_h = np.roots(des_char_poly_h)
+
+des_char_poly_psi = np.convolve([1, 2*zeta_psi*wn_psi, wn_psi**2], np.poly(np.array([psi_integrator])))
+des_poles_psi = np.roots(des_char_poly_psi)
+
+des_char_poly_al = np.convolve([1, 2*zeta_al*wn_al, wn_al**2], np.poly(np.array([al_integrator])))
+des_poles_al = np.roots(des_char_poly_al)
+
+des_char_poly_th = np.convolve([1, 2*zeta_th*wn_th, wn_th**2], np.poly(np.array([th_integrator])))
+des_poles_th = np.roots(des_char_poly_th)
 
 # H loop
 if np.linalg.matrix_rank(cnt.ctrb(Ahi, Bhi)) != np.size(Ahi, 1):
@@ -109,3 +204,46 @@ print('K:')
 print(Kh)
 print('Ki:')
 print(kih)
+
+
+# Psi loop
+if np.linalg.matrix_rank(cnt.ctrb(Aipsi, Bipsi)) != np.size(Aipsi, 1):
+    print("The system is not controllable")
+else:
+    K_temp = cnt.place(Aipsi, Bipsi, des_poles_psi)
+    Kpsi = K_temp[0, 0:2]
+    kipsi = K_temp[0, 2]
+
+print("\n=== Angle Gains ===")
+print('K:')
+print(Kpsi)
+print('Ki:')
+print(kipsi)
+
+# Alpha loop
+if np.linalg.matrix_rank(cnt.ctrb(Aial, Bial)) != np.size(Aial, 1):
+    print("The system is not controllable")
+else:
+    K_temp = cnt.place(Aial, Bial, des_poles_al)
+    Kal = K_temp[0, 0:2]
+    kial = K_temp[0, 2]
+
+print("\n=== Angle Gains ===")
+print('K:')
+print(Kal)
+print('Ki:')
+print(kial)
+
+# Theta loop
+if np.linalg.matrix_rank(cnt.ctrb(Aith, Bith)) != np.size(Aith, 1):
+    print("The system is not controllable")
+else:
+    K_temp = cnt.place(Aith, Bith, des_poles_th)
+    Kth = K_temp[0, 0:2]
+    kith = K_temp[0, 2]
+
+print("\n=== Theta Gains ===")
+print('K:')
+print(Kth)
+print('Ki:')
+print(kith)

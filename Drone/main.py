@@ -21,6 +21,15 @@ animation = DroneAnimation()
 drone = DroneDynamics()
 commander = DroneCommander()
 
+
+def saturate(u, llimit, ulimit):
+
+    if u < llimit:
+        u = llimit
+    elif u > ulimit:
+        u = ulimit
+    return u
+
 u = np.array([
     [0.64],
     [0.64],
@@ -35,11 +44,9 @@ while t < P.t_end:  # main simulation loop
     t_next_plot = t + P.t_plot
     while t < t_next_plot:
         drone.update(u)
-        # F = hcontroller.update_int(np.array([[h_r]]), np.array([[drone.state.item(2)], [drone.state.item(8)]])) + P.Fe
-        # taux, tauy, tauz = (0, 0, 0)
 
         F, taux, tauy, tauz = commander.update(drone.state)
-        tlimit = 1
+        tlimit = 100.0
 
         u = np.array([
             [(F-4*P.b_thrust)/(4*P.m_thrust) - tauz/(4*P.m_rot*P.mu_r) + (np.sqrt(2)*taux)/(4*P.d*P.m_thrust) - (np.sqrt(2)*tauy)/(4*P.d*P.m_thrust)],
@@ -49,6 +56,9 @@ while t < P.t_end:  # main simulation loop
         ])
 
         u = u.reshape((4, 1))
+
+        for ind, i in enumerate(u):
+            u[ind] = saturate(i, -tlimit, tlimit)
         t = t + P.Ts
 
     animation.update(drone.state)
