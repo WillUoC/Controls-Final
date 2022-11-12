@@ -82,12 +82,9 @@ Ahi = np.concatenate((
 
 Bhi = np.concatenate((Bh, np.array([[0.0]])), axis=0)
 
-
-
-# gain calculation
+## gain calculation
 
 tr_h = 1.0
-
 zeta_h = 0.707
 
 h_integrator = -1.0
@@ -95,9 +92,7 @@ h_integrator = -1.0
 wn_h = 2.2/tr_h # natural frequency for position
 
 des_char_poly_h = np.convolve([1, 2*zeta_h*wn_h, wn_h**2], np.poly(np.array([h_integrator])))
-
 des_poles_h = np.roots(des_char_poly_h)
-
 
 # H loop
 if np.linalg.matrix_rank(cnt.ctrb(Ahi, Bhi)) != np.size(Ahi, 1):

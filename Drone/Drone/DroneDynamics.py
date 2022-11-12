@@ -134,6 +134,8 @@ class DroneDynamics:
         F4 = self.f(self.state + self.Ts * F3, u)
         self.state = self.state + self.Ts / 6 * (F1 + 2 * F2 + 2 * F3 + F4)
 
+        if self.state.item(2) < 0: self.state[2] = 0
+
     def saturate(self, u, limit):
 
         for item, ind in enumerate(u):
