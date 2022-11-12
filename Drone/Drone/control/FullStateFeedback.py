@@ -3,9 +3,11 @@ from .. import DroneParam as P
 
 
 class FeedbackLoop:
-    def __init__(self, K, kr, lower_limit = None, upper_limit = None, ki=None, sample_rate=None):
-        self.K = K # state feedback gain
+    def __init__(self, K, kr, K2i=None, ki=None, lower_limit = None, upper_limit = None, sample_rate=None):
+        self.K = K2i # state feedback gain
         self.kr = kr # Input gain
+
+        self.K2 = K
 
         self.ulimit = upper_limit # Maximum force
         self.llimit = lower_limit
@@ -17,8 +19,7 @@ class FeedbackLoop:
         self.ki = ki
 
     def update(self, x_r, x):
-        print(self.K, x, self.kr, x_r)
-        y_unsat = -self.K @ x + self.kr @ x_r
+        y_unsat = -self.K2 @ x + self.kr @ x_r
 
 
         if self.llimit is not None and self.ulimit is not None:

@@ -179,15 +179,19 @@ wn_th = 2.2/tr_th
 
 des_char_poly_h = np.convolve([1, 2*zeta_h*wn_h, wn_h**2], np.poly(np.array([h_integrator])))
 des_poles_h = np.roots(des_char_poly_h)
+des_poles_h2 = np.roots([1, 2*zeta_h*wn_h, wn_h**2])
 
 des_char_poly_psi = np.convolve([1, 2*zeta_psi*wn_psi, wn_psi**2], np.poly(np.array([psi_integrator])))
 des_poles_psi = np.roots(des_char_poly_psi)
+des_poles_psi2 = np.roots([1, 2*zeta_psi*wn_psi, wn_psi**2])
 
 des_char_poly_al = np.convolve([1, 2*zeta_al*wn_al, wn_al**2], np.poly(np.array([al_integrator])))
 des_poles_al = np.roots(des_char_poly_al)
+des_poles_al2 = np.roots([1, 2*zeta_al*wn_al, wn_al**2])
 
 des_char_poly_th = np.convolve([1, 2*zeta_th*wn_th, wn_th**2], np.poly(np.array([th_integrator])))
 des_poles_th = np.roots(des_char_poly_th)
+des_poles_th2 = np.roots([1, 2*zeta_th*wn_th, wn_th**2])
 
 # H loop
 if np.linalg.matrix_rank(cnt.ctrb(Ahi, Bhi)) != np.size(Ahi, 1):
@@ -197,13 +201,19 @@ else:
     K_temp = cnt.place(Ahi, Bhi, des_poles_h)
     Kh = K_temp[0, 0:2]
     kih = K_temp[0, 2]
-    # kr1 = -np.linalg.inv(Cr1 @ np.linalg.inv(A1 - B1 @ K1) @ B1)
+    
+    Kh2 = cnt.place(Ah, Bh, des_poles_h2)
+    krh = -1.0/(Crh @ np.linalg.inv(Ah - Bh @ np.reshape(Kh, (1, 2))) @ Bh)
 
 print("\n=== H Gains ===")
 print('K:')
 print(Kh)
+print('K2:')
+print(Kh2)
 print('Ki:')
 print(kih)
+print('Kr')
+print(krh)
 
 
 # Psi loop
@@ -213,12 +223,18 @@ else:
     K_temp = cnt.place(Aipsi, Bipsi, des_poles_psi)
     Kpsi = K_temp[0, 0:2]
     kipsi = K_temp[0, 2]
+    Kpsi2 = cnt.place(Apsi, Bpsi, des_poles_psi2)
+    krpsi = -1.0/(Crpsi @ np.linalg.inv(Apsi - Bpsi @ np.reshape(Kpsi, (1, 2))) @ Bpsi)
 
-print("\n=== Angle Gains ===")
+print("\n=== Psi Gains ===")
 print('K:')
 print(Kpsi)
+print('K2:')
+print(Kpsi2)
 print('Ki:')
 print(kipsi)
+print('Kr')
+print(krpsi)
 
 # Alpha loop
 if np.linalg.matrix_rank(cnt.ctrb(Aial, Bial)) != np.size(Aial, 1):
@@ -227,12 +243,18 @@ else:
     K_temp = cnt.place(Aial, Bial, des_poles_al)
     Kal = K_temp[0, 0:2]
     kial = K_temp[0, 2]
+    Kal2 = cnt.place(Aal, Bal, des_poles_al2)
+    kral = -1.0/(Cral @ np.linalg.inv(Aal - Bal @ np.reshape(Kal, (1, 2))) @ Bal)
 
-print("\n=== Angle Gains ===")
+print("\n=== Alpha Gains ===")
 print('K:')
 print(Kal)
+print('K2:')
+print(Kal2)
 print('Ki:')
 print(kial)
+print('Kr')
+print(kral)
 
 # Theta loop
 if np.linalg.matrix_rank(cnt.ctrb(Aith, Bith)) != np.size(Aith, 1):
@@ -241,9 +263,15 @@ else:
     K_temp = cnt.place(Aith, Bith, des_poles_th)
     Kth = K_temp[0, 0:2]
     kith = K_temp[0, 2]
+    Kth2 = cnt.place(Ath, Bth, des_poles_th2)
+    krth = -1.0/(Crth @ np.linalg.inv(Ath - Bth @ np.reshape(Kth, (1, 2))) @ Bth)
 
 print("\n=== Theta Gains ===")
 print('K:')
 print(Kth)
+print('K2:')
+print(Kth2)
 print('Ki:')
 print(kith)
+print('Kr')
+print(krth)

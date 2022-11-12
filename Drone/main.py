@@ -55,8 +55,6 @@ while t < P.t_end:  # main simulation loop
             [(F-4*P.b_thrust)/(4*P.m_thrust) - tauz/(4*P.m_rot*P.mu_r) - (np.sqrt(2)*taux)/(4*P.d*P.m_thrust) + (np.sqrt(2)*tauy)/(4*P.d*P.m_thrust)]
         ])
 
-        u = u.reshape((4, 1))
-
         for ind, i in enumerate(u):
             u[ind] = saturate(i, -tlimit, tlimit)
         t = t + P.Ts

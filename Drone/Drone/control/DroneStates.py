@@ -7,20 +7,28 @@ import numpy as np
 class State(ABC):
 
     @abstractmethod
-    def __init__(self):
-        pass
+    def __init__(self, controllers: list[FeedbackLoop]):
+        self.h_controller = controllers[0]
+        self.theta_controller = controllers[1]
+        self.alpha_controller = controllers[2]
+        self.psi_controller = controllers[3]
 
     @abstractmethod
     def update(self, states) -> tuple[str, np.ndarray[float]]:
         pass
 
 class TakeoffState(State):
-    def __init__(self, h_controller: FeedbackLoop, FORCE_SCALE, climb_height):
+    def __init__(self, controllers: list[FeedbackLoop], FORCE_SCALE, climb_height):
         self.FORCE_SCALE = FORCE_SCALE
         self.climb_height = climb_height
-        self.h_controller = h_controller
 
-    def update(self, states):
+        self.alpha_ref = 0.0
+        self.theta_ref = 0.0
+        self.psi_ref = 0.0
+
+        super().__init__(controllers)
+
+    def update(self, states: np.ndarray[float]):
         h = states.item(2)
         hdot = states.item(8)
 
@@ -35,7 +43,9 @@ class TakeoffState(State):
         self.h_controller.update_int(xh_r, xh)
 
         F = P.Fe * self.FORCE_SCALE
-        taux, tauy, tauz = (0.0, 0.0, 0.0)
+        tauz = self.psi_controller.update(np.array([[self.psi_ref]]), np.array([[states.item(5)],[states.item(11)]]))
+        tauy = self.alpha_controller.update(np.array([[self.alpha_ref]]), np.array([[states.item(4)],[states.item(10)]]))
+        taux = self.theta_controller.update(np.array([[self.theta_ref]]), np.array([[states.item(3)],[states.item(9)]]))
 
         Forces = np.array([
             [F],
@@ -88,11 +98,7 @@ class CruiseState(State):
         self.alpha_ref = 0.0
         self.theta_ref = 0.0
 
-        self.h_controller = controllers[0]
-        self.psi_controller = controllers[3]
-        self.alpha_controller = controllers[2]
-        self.theta_controller = controllers[1]
-
+        super().__init__(controllers)
         self.TOLERANCE = TOLERANCE
     
     def set_theta(self, theta: float):
@@ -105,38 +111,11 @@ class CruiseState(State):
         self.psi_ref = psi
 
     def update(self, states: np.ndarray[float]):
-        xh = np.array([
-            [states.item(2)],
-            [states.item(8)]
-        ])
 
-        xh_r = np.array([[self.h_ref]])
-
-        xpsi = np.array([
-            [states.item(5)],
-            [states.item(11)]
-        ])
-
-        xpsi_r = np.array([[self.psi_ref]])
-
-        xal = np.array([
-            [states.item(4)],
-            [states.item(10)]
-        ])
-
-        xal_r = np.array([[self.alpha_ref]])
-
-        xth = np.array([
-            [states.item(3)],
-            [states.item(9)]
-        ])
-
-        xth_r = np.array([[self.theta_ref]])
-
-        F = self.h_controller.update_int(xh_r, xh)
-        tauz = self.psi_controller.update_int(xpsi_r, xpsi)
-        tauy = self.alpha_controller.update_int(xal_r, xal)
-        taux = self.theta_controller.update_int(xth_r, xth)
+        F = self.h_controller.update_int(np.array([[self.h_ref]]), np.array([[states.item(2)],[states.item(8)]]))
+        tauz = self.psi_controller.update(np.array([[self.psi_ref]]), np.array([[states.item(5)],[states.item(11)]]))
+        tauy = self.alpha_controller.update(np.array([[self.alpha_ref]]), np.array([[states.item(4)],[states.item(10)]]))
+        taux = self.theta_controller.update(np.array([[self.theta_ref]]), np.array([[states.item(3)],[states.item(9)]]))
 
         Forces = np.array([
             [F],
@@ -145,7 +124,7 @@ class CruiseState(State):
             [tauz]
         ])
 
-        if xh.item(0) > self.h_ref - self.TOLERANCE and xh.item(0) < self.h_ref + self.TOLERANCE and xpsi.item(0) > self.psi_ref - self.TOLERANCE and xpsi.item(0) < self.psi_ref + self.TOLERANCE:
+        if states.item(2) > self.h_ref + 10 - self.TOLERANCE and states.item(2) < self.h_ref + 10 + self.TOLERANCE:
             logging.info("Switching to descent")
             return('DESCENT', Forces)  # TODO: Change to cruise state when implemented
         else:

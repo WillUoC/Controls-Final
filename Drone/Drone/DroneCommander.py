@@ -10,21 +10,21 @@ import typing
 class DroneCommander:
     def __init__(self):
         # Initialize Controllers
-        hcontroller = FeedbackLoop(P.Kh, 0, ki=P.kih, sample_rate=P.Ts)
-        psicontroller = FeedbackLoop(P.Kpsi, 0, ki=P.kipsi, sample_rate=P.Ts)
-        alphacontroller = FeedbackLoop(P.Kal, 0, ki=P.kial, sample_rate=P.Ts)
-        thetacontroller = FeedbackLoop(P.Kth, 0, ki=P.kith, sample_rate=P.Ts)
+        hcontroller = FeedbackLoop(P.Kh, P.krh, P.Kh, ki=P.kih, sample_rate=P.Ts)
+        psicontroller = FeedbackLoop(P.Kpsi, P.krpsi, P.Kpsi, ki=P.kipsi, sample_rate=P.Ts)
+        alphacontroller = FeedbackLoop(P.Kal, P.kral, P.Kal, ki=P.kial, sample_rate=P.Ts)
+        thetacontroller = FeedbackLoop(P.Kth, P.krth, P.Kth, ki=P.kith, sample_rate=P.Ts)
 
         controllers = [hcontroller, thetacontroller, alphacontroller, psicontroller]
 
         # Initialize States
-        takeoff_state = TakeoffState(hcontroller, 1.1, 2)
+        takeoff_state = TakeoffState(controllers, 1.1, 2)
         climb_state = ClimbState(hcontroller, 3)
         cruise_state = CruiseState(controllers, 10)
         descent_state = DescentState(hcontroller, 0.5)
         landing_state = LandingState(0.99)
 
-        cruise_state.set_psi(np.pi)
+        cruise_state.set_alpha(np.pi/12)
 
         self.state_machine = StateMachine()
         self.state_machine.add_state('TAKEOFF', takeoff_state)
@@ -38,7 +38,7 @@ class DroneCommander:
 
     def update(self, states):
         forces, end_state = self.state_machine.update(states)
-        forces = forces.reshape((4, 1))
+        forces = forces.reshape((4,))
 
         return(forces)
 
