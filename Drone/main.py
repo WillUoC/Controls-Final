@@ -38,14 +38,17 @@ u = np.array([
 ])
 
 t = P.t_start  # time starts at t_start
-while t < P.t_end:  # main simulation loop
+end_state = False
+
+while not(end_state): # t < P.t_end:  # main simulation loop
 
     # Propagate dynamics at rate Ts
     t_next_plot = t + P.t_plot
     while t < t_next_plot:
         drone.update(u)
 
-        F, taux, tauy, tauz = commander.update(drone.state)
+        forces, end_state = commander.update(drone.state)
+        F, taux, tauy, tauz = forces
         tlimit = 100.0
 
         u = np.array([

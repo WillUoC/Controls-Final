@@ -92,7 +92,6 @@ class ClimbState(State):
         else:
             return('CLIMB', Forces)
 
-
 class CruiseState(State):
     def __init__(self, controllers: list[FeedbackLoop], h_target: float, STATE_NAME: str='CRUISE', NEXT_STATE: str='DESCENT', TOLERANCE: float=1e-2):
         self.h_ref = h_target
@@ -268,6 +267,20 @@ class LandingState(State):
 
         if h >= self.climb_height:
             logging.info('Landed')
-            return('LANDING', Forces)
+            return('LANDED', Forces)
         else:
             return('LANDING', Forces)
+
+class LandedState(State):
+    def __init__(self):
+        return None
+
+    def update(self, states):
+        forces = np.array([
+            [0],
+            [0],
+            [0],
+            [0]
+        ])
+
+        return('LANDED', forces)

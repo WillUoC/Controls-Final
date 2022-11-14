@@ -1,7 +1,7 @@
 from . import DroneParam as P
 from .control.FullStateFeedback import FeedbackLoop
 from .control.util.exceptions import InitializationError
-from .control.DroneStates import State, TakeoffState, ClimbState, CruiseState, DescentState, LandingState
+from .control.DroneStates import State, TakeoffState, ClimbState, CruiseState, DescentState, LandingState, LandedState
 import numpy as np
 import logging
 import typing
@@ -27,6 +27,7 @@ class DroneCommander:
         cruise_state_3 = CruiseState(controllers, 8, STATE_NAME='CRUISE3')
         descent_state = DescentState(controllers, 0.1)
         landing_state = LandingState(0.99)
+        landed_state = LandedState()
 
         cruise_state_1.set_x(-4)
         cruise_state_1.set_y(-4)
@@ -45,7 +46,7 @@ class DroneCommander:
         self.state_machine.add_state('CRUISE3', cruise_state_3)
         self.state_machine.add_state('DESCENT', descent_state)
         self.state_machine.add_state('LANDING', landing_state)
-
+        self.state_machine.add_state('LANDED', landed_state, True)
         self.state_machine.set_start('TAKEOFF')
 
 
@@ -53,7 +54,7 @@ class DroneCommander:
         forces, end_state = self.state_machine.update(states)
         forces = forces.reshape((4,))
 
-        return(forces)
+        return(forces, end_state)
 
 class StateMachine:
     def __init__(self):
