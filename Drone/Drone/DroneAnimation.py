@@ -55,6 +55,11 @@ class DroneAnimation:
             [-P.d*np.sqrt(2)/2, P.d*np.sqrt(2)/2, 0]
         ])
 
+        self.line3xy = np.array([
+            [0, 0, 0],
+            [2*P.d, 0, 0]
+        ])
+
     def update(self, x):
         # Process inputs to function
         x_pos = x.item(0)
@@ -75,7 +80,7 @@ class DroneAnimation:
 
         self.ax.axes.set_xlim(-cube_lim, cube_lim)
         self.ax.axes.set_ylim(-cube_lim, cube_lim)
-        self.ax.axes.set_zlim(-cube_lim, cube_lim)
+        self.ax.axes.set_zlim(0, 2*cube_lim)
 
         R_roll = np.array([
             [1, 0, 0],
@@ -101,6 +106,7 @@ class DroneAnimation:
 
         linexy = self.linexy @ Rbw + np.tile(offset, (np.shape(self.linexy)[0], 1))
         line2xy = self.line2xy @ Rbw + np.tile(offset, (np.shape(self.line2xy)[0], 1))
+        line3xy = self.line3xy @ Rbw + np.tile(offset, (np.shape(self.line3xy)[0], 1))
 
         rotor1xy = self.rotor1xy @ Rbw + np.tile(offset, (np.shape(self.rotor1xy)[0], 1))
         rotor2xy = self.rotor2xy @ Rbw + np.tile(offset, (np.shape(self.rotor2xy)[0], 1))
@@ -112,13 +118,23 @@ class DroneAnimation:
         # created and added to the axes. After initialization, the polygon
         # patch object will only be updated.
 
+
+        LANDING_PAD_SIZE = 0.5
+        self.ax.plot3D([LANDING_PAD_SIZE, LANDING_PAD_SIZE], [LANDING_PAD_SIZE, -LANDING_PAD_SIZE], [0, 0], 'g-')
+        self.ax.plot3D([LANDING_PAD_SIZE, -LANDING_PAD_SIZE], [-LANDING_PAD_SIZE, -LANDING_PAD_SIZE], [0, 0], 'g-')
+        self.ax.plot3D([-LANDING_PAD_SIZE, -LANDING_PAD_SIZE], [-LANDING_PAD_SIZE, LANDING_PAD_SIZE], [0, 0], 'g-')
+        self.ax.plot3D([-LANDING_PAD_SIZE, LANDING_PAD_SIZE], [LANDING_PAD_SIZE, LANDING_PAD_SIZE], [0, 0], 'g-')
+
+
         self.ax.plot3D(line2xy[:, 0], line2xy[:, 1], line2xy[:, 2], "b-")
         self.ax.plot3D(linexy[:, 0], linexy[:, 1], linexy[:, 2], "b-")
+        self.ax.plot3D(line3xy[:, 0], line3xy[:, 1], line3xy[:, 2], "b-")
         self.ax.plot3D(rotor1xy[:, 0], rotor1xy[:, 1], rotor1xy[:, 2], "r--")
         self.ax.plot3D(rotor2xy[:, 0], rotor2xy[:, 1], rotor2xy[:, 2], "r--")
         self.ax.plot3D(rotor3xy[:, 0], rotor3xy[:, 1], rotor3xy[:, 2], "r--")
         self.ax.plot3D(rotor4xy[:, 0], rotor4xy[:, 1], rotor4xy[:, 2], "r--")
-        self.ax.plot3D([0, 0.25], [0, 0], [0, 0], 'g--')
-        self.ax.plot3D([0, 0], [0, 0.25], [0, 0], 'g--')
-        self.ax.plot3D([0, 0], [0, 0], [0, 0.25], 'g--')
+
+        # self.ax.plot3D([0, 0], [4, 4], [0, 8], 'r--')
+
+
 

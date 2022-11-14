@@ -24,10 +24,11 @@ psidot0 = 0
 
 Ts = 0.01
 t_start = 0.0
-t_end = 60.0
+t_end = 130.0
 t_plot = 0.1
 
 T_max = 1
+max_angle = 15*np.pi/180
 
 ## Plotting Parameters
 rotor_radius = 0.087 # m
@@ -40,8 +41,8 @@ mc = 20.0 # kg
 rc = 0.5
 jc = 2/5*mc*rc**2
 
-
 Fe = mc*g
+
 ## Aero 2 - System ID Parameters 
 mu_r = 0.01
 mu_lat = 0.0001
@@ -150,12 +151,55 @@ Aith = np.concatenate((
 
 Bith = np.concatenate((Bth, np.array([[0.0]])), axis=0)
 
+## x Loop Dynamics
+Ax = np.array([
+    [0.0, 1.0],
+    [0.0, -mu_lat/mc]
+])
+
+Bx = np.array([
+    [0.0],
+    [g]
+])
+
+Crx = np.array([
+    [1.0, 0.0]
+])
+
+Aix = np.concatenate((
+    np.concatenate((Ax, np.zeros((2, 1))), axis=1),
+    np.concatenate((-Crx, np.array([[0.0]])), axis=1)),
+    axis=0)
+
+Bix = np.concatenate((Bx, np.array([[0.0]])), axis=0)
+
+## y Loop Dynamics
+Ay = np.array([
+    [0.0, 1.0],
+    [0.0, -mu_lat/mc]
+])
+
+By = np.array([
+    [0.0],
+    [-g]
+])
+
+Cry = np.array([
+    [1.0, 0.0]
+])
+
+Aiy = np.concatenate((
+    np.concatenate((Ay, np.zeros((2, 1))), axis=1),
+    np.concatenate((-Cry, np.array([[0.0]])), axis=1)),
+    axis=0)
+
+Biy = np.concatenate((By, np.array([[0.0]])), axis=0)
 
 ## gain calculation
-tr_h = 1.0
+tr_h = 0.1
 zeta_h = 0.707
 
-tr_psi = 0.5
+tr_psi = 0.1
 zeta_psi = 0.707
 
 tr_al = 0.1
@@ -164,17 +208,26 @@ zeta_al = 0.707
 tr_th = 0.1
 zeta_th = 0.707
 
+tr_x = 1.0
+zeta_x = 0.707
+
+tr_y = 1.0
+zeta_y = 0.707
+
 h_integrator = -1.0
 psi_integrator = -1.0
 al_integrator = -1.0
 th_integrator = -1.0
-
+x_integrator = -1.0
+y_integrator = -1.0
 
 
 wn_h = 2.2/tr_h # natural frequency for position
 wn_psi = 2.2/tr_psi
 wn_al = 2.2/tr_al
 wn_th = 2.2/tr_th
+wn_x = 2.2/tr_x
+wn_y = 2.2/tr_y
 
 
 des_char_poly_h = np.convolve([1, 2*zeta_h*wn_h, wn_h**2], np.poly(np.array([h_integrator])))
@@ -192,6 +245,12 @@ des_poles_al2 = np.roots([1, 2*zeta_al*wn_al, wn_al**2])
 des_char_poly_th = np.convolve([1, 2*zeta_th*wn_th, wn_th**2], np.poly(np.array([th_integrator])))
 des_poles_th = np.roots(des_char_poly_th)
 des_poles_th2 = np.roots([1, 2*zeta_th*wn_th, wn_th**2])
+
+des_char_poly_x = np.convolve([1, 2*zeta_x*wn_x, wn_x**2], np.poly(np.array([x_integrator])))
+des_poles_x = np.roots(des_char_poly_x)
+
+des_char_poly_y = np.convolve([1, 2*zeta_y*wn_y, wn_y**2], np.poly(np.array([y_integrator])))
+des_poles_y = np.roots(des_char_poly_y)
 
 # H loop
 if np.linalg.matrix_rank(cnt.ctrb(Ahi, Bhi)) != np.size(Ahi, 1):
@@ -275,3 +334,37 @@ print('Ki:')
 print(kith)
 print('Kr')
 print(krth)
+
+# x loop
+if np.linalg.matrix_rank(cnt.ctrb(Aix, Bix)) != np.size(Aix, 1):
+    print("The system is not controllable")
+else:
+    K_temp = cnt.place(Aix, Bix, des_poles_x)
+    Kx = K_temp[0, 0:2]
+    kix = K_temp[0, 2]
+    krx = -1.0/(Crx @ np.linalg.inv(Ax - Bx @ np.reshape(Kx, (1, 2))) @ Bx)
+
+print("\n=== X Gains ===")
+print('K:')
+print(Kx)
+print('Ki:')
+print(kix)
+print('Kr')
+print(krx)
+
+# y loop
+if np.linalg.matrix_rank(cnt.ctrb(Aiy, Biy)) != np.size(Aiy, 1):
+    print("The system is not controllable")
+else:
+    K_temp = cnt.place(Aiy, Biy, des_poles_y)
+    Ky = K_temp[0, 0:2]
+    kiy = K_temp[0, 2]
+    kry = -1.0/(Cry @ np.linalg.inv(Ay - By @ np.reshape(Ky, (1, 2))) @ By)
+
+print("\n=== Y Gains ===")
+print('K:')
+print(Ky)
+print('Ki:')
+print(kiy)
+print('Kr')
+print(kry)

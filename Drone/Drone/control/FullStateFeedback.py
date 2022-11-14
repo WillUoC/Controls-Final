@@ -33,7 +33,9 @@ class FeedbackLoop:
         y_unsat = -self.K @ x - self.ki * self.integrator
 
         if self.llimit is not None and self.ulimit is not None:
-            return(self.saturate(y_unsat.item(0), self.ulimit, self.llimit))
+            y_sat = self.saturate(y_unsat.item(0), self.ulimit, self.llimit)
+            self.integrator = self.integrator - 1.0/self.ki * (y_sat - y_unsat)
+            return(y_sat)
         else:
             return(y_unsat.item(0))
 

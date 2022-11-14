@@ -99,7 +99,7 @@ class DroneDynamics:
             [Ft*(np.sin(alpha)*np.cos(psi)*np.cos(theta) + np.sin(psi)*np.sin(theta)) - self.mu_lat*xdot],
             [Ft*(np.sin(alpha)*np.sin(psi)*np.cos(theta) - np.cos(psi)*np.sin(theta)) - self.mu_lat*xdot],
             [Ft*np.cos(alpha)*np.cos(theta)-self.g*self.mc],
-            [taux*np.cos(alpha)*np.cos(psi) + tauy*(np.sin(alpha)*np.sin(theta)*np.cos(psi) - np.sin(psi)*np.cos(theta)) + tauz*(np.sin(alpha)*np.sin(psi)*np.cos(theta) - np.sin(theta)*np.cos(psi))],
+            [taux*np.cos(alpha)*np.cos(psi) + tauy*(np.sin(alpha)*np.sin(theta)*np.cos(psi) - np.sin(psi)*np.cos(theta)) + tauz*(np.sin(alpha)*np.cos(psi)*np.cos(theta) + np.sin(theta)*np.sin(psi))],
             [taux*np.sin(psi)*np.cos(alpha) + tauy*(np.sin(alpha)*np.sin(psi)*np.sin(theta) + np.cos(psi)*np.cos(theta)) + tauz*(np.sin(alpha)*np.sin(psi)*np.cos(theta) - np.sin(theta)*np.cos(psi))],
             [-taux*np.sin(alpha) + tauy*np.sin(theta)*np.cos(alpha) + tauz*np.cos(alpha)*np.cos(theta)]
         ])
