@@ -28,6 +28,7 @@ class DroneDynamics:
 
         self.mu_lat = P.mu_lat
         self.mu_r = P.mu_r
+        self.mu_vert = P.mu_vert
 
         self.m_thrust = P.m_thrust
         self.b_thrust = P.b_thrust
@@ -92,14 +93,14 @@ class DroneDynamics:
             [self.mc + 4*self.mm, 0, 0, 0, 0, 0],
             [0, self.mc + 4*self.mm, 0, 0, 0, 0],
             [0, 0, self.mc + self.mm, 0, 0, 0],
-            [0, 0, 0, self.jc + 4*self.mm*(self.d*np.sqrt(2)/2)**2, 0, 0],
-            [0, 0, 0, 0, self.jc + 4*self.mm*(self.d*np.sqrt(2)/2)**2, 0],
-            [0, 0, 0, 0, 0, self.jc + 4*self.mm*self.d**2]])
+            [0, 0, 0, self.jc + 2*self.d**2*self.mm, 0, 0],
+            [0, 0, 0, 0, self.jc + 2*self.d**2*self.mm, 0],
+            [0, 0, 0, 0, 0, self.jc + 4*self.d**2*self.mm]])
 
         C = np.array([
             [Ft*(np.sin(alpha)*np.cos(psi)*np.cos(theta) + np.sin(psi)*np.sin(theta)) - self.mu_lat*xdot],
-            [Ft*(np.sin(alpha)*np.sin(psi)*np.cos(theta) - np.cos(psi)*np.sin(theta)) - self.mu_lat*xdot],
-            [Ft*np.cos(alpha)*np.cos(theta)-self.g*self.mc],
+            [Ft*(np.sin(alpha)*np.sin(psi)*np.cos(theta) - np.cos(psi)*np.sin(theta)) - self.mu_lat*ydot],
+            [Ft*np.cos(alpha)*np.cos(theta) - self.g*(self.mc + 4*self.mm) - self.mu_vert*zdot],
             [taux],
             [tauy],
             [tauz]

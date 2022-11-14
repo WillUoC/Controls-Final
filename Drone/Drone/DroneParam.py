@@ -46,8 +46,9 @@ Fe = mc*g
 
 ## Aero 2 - System ID Parameters 
 mu_r = 0.01
-mu_lat = 0.0001
-mu_lon = 0.0001
+mu_lat = 0.01
+mu_lon = 0.01
+mu_vert = 0.01
 
 # Throttle -> Thrust data points from table (relatively linear)
 # (0.4, 2.26)
@@ -115,7 +116,7 @@ Aal = np.array([
 
 Bal = np.array([
     [0.0],
-    [1/(jc + 4*mm*(d*np.sqrt(2)/2)**2)]
+    [1/(jc + 2*mm*d**2)]
 ])
 
 Cral = np.array([
@@ -138,7 +139,7 @@ Ath = np.array([
 
 Bth = np.array([
     [0.0],
-    [1/(jc + 4*mm*(d*np.sqrt(2)/2)**2)]
+    [1/(jc + 2*mm*d**2)]
 ])
 
 Crth = np.array([
