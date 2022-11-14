@@ -170,7 +170,7 @@ class CruiseState(State):
 
         F = self.h_controller.update_int(np.array([[self.h_ref]]), np.array([[states.item(2)],[states.item(8)]]))
 
-        if np.abs(states.item(5) - self.psi_ref) < self.TOLERANCE:
+        if np.abs(states.item(5) - self.psi_ref) < np.pi/4:
             self.alpha_ref = self.x_controller.update_int(np.array([[x_ref.item(0)]]), np.array([[pos.item(0)], [posdot.item(0)]]))
             self.theta_ref = self.y_controller.update_int(np.array([[x_ref.item(1)]]), np.array([[pos.item(1)], [posdot.item(1)]]))
 
@@ -178,7 +178,7 @@ class CruiseState(State):
         tauy = self.alpha_controller.update(np.array([[self.alpha_ref]]), np.array([[angles.item(1)],[angledots.item(1)]]))
         taux = self.theta_controller.update(np.array([[self.theta_ref]]), np.array([[angles.item(0)],[angledots.item(0)]]))
 
-        taux, tauy, tauz = np.reshape(psi_rot @ np.array([[taux],[tauy],[tauz]]), (3,))
+        # taux, tauy, tauz = np.reshape(psi_rot @ np.array([[taux],[tauy],[tauz]]), (3,))
 
         Forces = np.array([
             [F],

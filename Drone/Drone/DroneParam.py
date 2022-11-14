@@ -37,7 +37,8 @@ rotor_resolution = 100 # pts/circ
 ## Drone Parameters 
 d = 0.2 # m
 g = 9.81 # m/s^2
-mc = 20.0 # kg
+mm = 0.287
+mc = 20.0 - 4*mm # kg
 rc = 0.5
 jc = 2/5*mc*rc**2
 
@@ -69,7 +70,7 @@ Ah = np.array([
 
 Bh = np.array([
     [0.0],
-    [1/mc]
+    [1/(mc + 4*mm)]
 ])
 
 Crh = np.array([
@@ -92,7 +93,7 @@ Apsi = np.array([
 
 Bpsi = np.array([
     [0.0],
-    [1/jc]
+    [1/(jc + 4*mm*d**2)]
 ])
 
 Crpsi = np.array([
@@ -114,7 +115,7 @@ Aal = np.array([
 
 Bal = np.array([
     [0.0],
-    [1/jc]
+    [1/(jc + 4*mm*(d*np.sqrt(2)/2)**2)]
 ])
 
 Cral = np.array([
@@ -137,7 +138,7 @@ Ath = np.array([
 
 Bth = np.array([
     [0.0],
-    [1/jc]
+    [1/(jc + 4*mm*(d*np.sqrt(2)/2)**2)]
 ])
 
 Crth = np.array([
@@ -154,7 +155,7 @@ Bith = np.concatenate((Bth, np.array([[0.0]])), axis=0)
 ## x Loop Dynamics
 Ax = np.array([
     [0.0, 1.0],
-    [0.0, -mu_lat/mc]
+    [0.0, -mu_lat/(mc + 4*mm)]
 ])
 
 Bx = np.array([
@@ -176,7 +177,7 @@ Bix = np.concatenate((Bx, np.array([[0.0]])), axis=0)
 ## y Loop Dynamics
 Ay = np.array([
     [0.0, 1.0],
-    [0.0, -mu_lat/mc]
+    [0.0, -mu_lat/(mc + 4*mm)]
 ])
 
 By = np.array([
@@ -199,7 +200,7 @@ Biy = np.concatenate((By, np.array([[0.0]])), axis=0)
 tr_h = 0.1
 zeta_h = 0.707
 
-tr_psi = 0.1
+tr_psi = 2.0
 zeta_psi = 0.707
 
 tr_al = 0.1

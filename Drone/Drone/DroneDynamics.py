@@ -23,6 +23,7 @@ class DroneDynamics:
         # simulation time step
         self.Ts = P.Ts
         self.mc = P.mc
+        self.mm = P.mm
         self.jc = P.jc
 
         self.mu_lat = P.mu_lat
@@ -88,20 +89,20 @@ class DroneDynamics:
 
         # The equations of motion.        
         M = np.array([
-            [self.mc, 0, 0, 0, 0, 0],
-            [0, self.mc, 0, 0, 0, 0],
-            [0, 0, self.mc, 0, 0, 0],
-            [0, 0, 0, self.jc, 0, 0],
-            [0, 0, 0, 0, self.jc, 0],
-            [0, 0, 0, 0, 0, self.jc]])
+            [self.mc + 4*self.mm, 0, 0, 0, 0, 0],
+            [0, self.mc + 4*self.mm, 0, 0, 0, 0],
+            [0, 0, self.mc + self.mm, 0, 0, 0],
+            [0, 0, 0, self.jc + 4*self.mm*(self.d*np.sqrt(2)/2)**2, 0, 0],
+            [0, 0, 0, 0, self.jc + 4*self.mm*(self.d*np.sqrt(2)/2)**2, 0],
+            [0, 0, 0, 0, 0, self.jc + 4*self.mm*self.d**2]])
 
         C = np.array([
             [Ft*(np.sin(alpha)*np.cos(psi)*np.cos(theta) + np.sin(psi)*np.sin(theta)) - self.mu_lat*xdot],
             [Ft*(np.sin(alpha)*np.sin(psi)*np.cos(theta) - np.cos(psi)*np.sin(theta)) - self.mu_lat*xdot],
             [Ft*np.cos(alpha)*np.cos(theta)-self.g*self.mc],
-            [taux*np.cos(alpha)*np.cos(psi) + tauy*(np.sin(alpha)*np.sin(theta)*np.cos(psi) - np.sin(psi)*np.cos(theta)) + tauz*(np.sin(alpha)*np.cos(psi)*np.cos(theta) + np.sin(theta)*np.sin(psi))],
-            [taux*np.sin(psi)*np.cos(alpha) + tauy*(np.sin(alpha)*np.sin(psi)*np.sin(theta) + np.cos(psi)*np.cos(theta)) + tauz*(np.sin(alpha)*np.sin(psi)*np.cos(theta) - np.sin(theta)*np.cos(psi))],
-            [-taux*np.sin(alpha) + tauy*np.sin(theta)*np.cos(alpha) + tauz*np.cos(alpha)*np.cos(theta)]
+            [taux],
+            [tauy],
+            [tauz]
         ])
 
         tmp = np.linalg.inv(M) @ C
