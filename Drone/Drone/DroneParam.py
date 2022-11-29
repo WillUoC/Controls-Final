@@ -1,6 +1,6 @@
 import numpy as np
 import control as cnt
-
+import logging
 
 def line_from_points(x1, y1, x2, y2):
     slope = (y2-y1)/(x2-x1)
@@ -66,7 +66,7 @@ m_rot, b_rot = line_from_points(0.4, (1900*2*np.pi/60), 1.0, (3673*2*np.pi/60))
 ## H Loop Dynamics
 Ah = np.array([
     [0.0, 1.0],
-    [0.0, 0.0]
+    [0.0, -mu_vert/(mc+4*mm)]
 ])
 
 Bh = np.array([
@@ -130,7 +130,6 @@ Aial = np.concatenate((
 
 Bial = np.concatenate((Bal, np.array([[0.0]])), axis=0)
 
-
 ## Roll Loop Dynamics
 Ath = np.array([
     [0.0, 1.0],
@@ -174,6 +173,26 @@ Aix = np.concatenate((
     axis=0)
 
 Bix = np.concatenate((Bx, np.array([[0.0]])), axis=0)
+
+## x Loop Dynamics
+Axdot = np.array([
+    [-mu_lat/(mc + 4*mm)]
+])
+
+Bxdot = np.array([
+    [g]
+])
+
+Crxdot = np.array([
+    [1.0]
+])
+
+Aixdot = np.concatenate((
+    np.concatenate((Axdot, np.zeros((1, 1))), axis=1),
+    np.concatenate((-Crxdot, np.array([[0.0]])), axis=1)),
+    axis=0)
+
+Bixdot = np.concatenate((Bxdot, np.array([[0.0]])), axis=0)
 
 ## y Loop Dynamics
 Ay = np.array([
@@ -256,7 +275,7 @@ des_poles_y = np.roots(des_char_poly_y)
 
 # H loop
 if np.linalg.matrix_rank(cnt.ctrb(Ahi, Bhi)) != np.size(Ahi, 1):
-    print("The system is not controllable")
+    logging.info("The system is not controllable")
     
 else:
     K_temp = cnt.place(Ahi, Bhi, des_poles_h)
@@ -266,20 +285,20 @@ else:
     Kh2 = cnt.place(Ah, Bh, des_poles_h2)
     krh = -1.0/(Crh @ np.linalg.inv(Ah - Bh @ np.reshape(Kh, (1, 2))) @ Bh)
 
-print("\n=== H Gains ===")
-print('K:')
-print(Kh)
-print('K2:')
-print(Kh2)
-print('Ki:')
-print(kih)
-print('Kr')
-print(krh)
+logging.info("\n=== H Gains ===")
+logging.info('K:')
+logging.info(Kh)
+logging.info('K2:')
+logging.info(Kh2)
+logging.info('Ki:')
+logging.info(kih)
+logging.info('Kr')
+logging.info(krh)
 
 
 # Psi loop
 if np.linalg.matrix_rank(cnt.ctrb(Aipsi, Bipsi)) != np.size(Aipsi, 1):
-    print("The system is not controllable")
+    logging.info("The system is not controllable")
 else:
     K_temp = cnt.place(Aipsi, Bipsi, des_poles_psi)
     Kpsi = K_temp[0, 0:2]
@@ -287,19 +306,19 @@ else:
     Kpsi2 = cnt.place(Apsi, Bpsi, des_poles_psi2)
     krpsi = -1.0/(Crpsi @ np.linalg.inv(Apsi - Bpsi @ np.reshape(Kpsi, (1, 2))) @ Bpsi)
 
-print("\n=== Psi Gains ===")
-print('K:')
-print(Kpsi)
-print('K2:')
-print(Kpsi2)
-print('Ki:')
-print(kipsi)
-print('Kr')
-print(krpsi)
+logging.info("\n=== Psi Gains ===")
+logging.info('K:')
+logging.info(Kpsi)
+logging.info('K2:')
+logging.info(Kpsi2)
+logging.info('Ki:')
+logging.info(kipsi)
+logging.info('Kr')
+logging.info(krpsi)
 
 # Alpha loop
 if np.linalg.matrix_rank(cnt.ctrb(Aial, Bial)) != np.size(Aial, 1):
-    print("The system is not controllable")
+    logging.info("The system is not controllable")
 else:
     K_temp = cnt.place(Aial, Bial, des_poles_al)
     Kal = K_temp[0, 0:2]
@@ -307,19 +326,19 @@ else:
     Kal2 = cnt.place(Aal, Bal, des_poles_al2)
     kral = -1.0/(Cral @ np.linalg.inv(Aal - Bal @ np.reshape(Kal, (1, 2))) @ Bal)
 
-print("\n=== Alpha Gains ===")
-print('K:')
-print(Kal)
-print('K2:')
-print(Kal2)
-print('Ki:')
-print(kial)
-print('Kr')
-print(kral)
+logging.info("\n=== Alpha Gains ===")
+logging.info('K:')
+logging.info(Kal)
+logging.info('K2:')
+logging.info(Kal2)
+logging.info('Ki:')
+logging.info(kial)
+logging.info('Kr')
+logging.info(kral)
 
 # Theta loop
 if np.linalg.matrix_rank(cnt.ctrb(Aith, Bith)) != np.size(Aith, 1):
-    print("The system is not controllable")
+    logging.info("The system is not controllable")
 else:
     K_temp = cnt.place(Aith, Bith, des_poles_th)
     Kth = K_temp[0, 0:2]
@@ -327,46 +346,40 @@ else:
     Kth2 = cnt.place(Ath, Bth, des_poles_th2)
     krth = -1.0/(Crth @ np.linalg.inv(Ath - Bth @ np.reshape(Kth, (1, 2))) @ Bth)
 
-print("\n=== Theta Gains ===")
-print('K:')
-print(Kth)
-print('K2:')
-print(Kth2)
-print('Ki:')
-print(kith)
-print('Kr')
-print(krth)
+logging.info("\n=== Theta Gains ===")
+logging.info('K:')
+logging.info(Kth)
+logging.info('K2:')
+logging.info(Kth2)
+logging.info('Ki:')
+logging.info(kith)
+logging.info('Kr')
+logging.info(krth)
 
 # x loop
 if np.linalg.matrix_rank(cnt.ctrb(Aix, Bix)) != np.size(Aix, 1):
-    print("The system is not controllable")
+    logging.info("The system is not controllable")
 else:
     K_temp = cnt.place(Aix, Bix, des_poles_x)
     Kx = K_temp[0, 0:2]
     kix = K_temp[0, 2]
     krx = -1.0/(Crx @ np.linalg.inv(Ax - Bx @ np.reshape(Kx, (1, 2))) @ Bx)
 
-print("\n=== X Gains ===")
-print('K:')
-print(Kx)
-print('Ki:')
-print(kix)
-print('Kr')
-print(krx)
+logging.info("\n=== X Gains ===")
+logging.info('K:')
+logging.info(Kx)
+logging.info('Ki:')
+logging.info(kix)
+logging.info('Kr')
+logging.info(krx)
 
 # y loop
 if np.linalg.matrix_rank(cnt.ctrb(Aiy, Biy)) != np.size(Aiy, 1):
-    print("The system is not controllable")
+    logging.info("The system is not controllable")
 else:
+    logging.info(f'Desired poles in y: {des_poles_y}')
     K_temp = cnt.place(Aiy, Biy, des_poles_y)
     Ky = K_temp[0, 0:2]
     kiy = K_temp[0, 2]
     kry = -1.0/(Cry @ np.linalg.inv(Ay - By @ np.reshape(Ky, (1, 2))) @ By)
 
-print("\n=== Y Gains ===")
-print('K:')
-print(Ky)
-print('Ki:')
-print(kiy)
-print('Kr')
-print(kry)

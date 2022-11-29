@@ -76,7 +76,7 @@ class DroneAnimation:
 
     def drawVehicle(self, x, y, z, theta, alpha, psi):
         self.ax.cla()
-        cube_lim = 5
+        cube_lim = 4
 
         self.ax.axes.set_xlim(-cube_lim, cube_lim)
         self.ax.axes.set_ylim(-cube_lim, cube_lim)

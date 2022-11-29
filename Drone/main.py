@@ -11,7 +11,6 @@ import logging
 # Initialize Logging
 logging.basicConfig(level=logging.INFO)
 
-
 # instantiate reference input classes
 reference = signalGenerator(amplitude=1, frequency=1/15)
 
@@ -19,7 +18,16 @@ reference = signalGenerator(amplitude=1, frequency=1/15)
 dataPlot = dataPlotter()
 animation = DroneAnimation()
 drone = DroneDynamics()
-commander = DroneCommander()
+
+fp_points = np.array([
+    [-4, -4, 8],
+    [4, 4, 8],
+    [4, -4, 8],
+    [-4, 4, 8],
+    [0, 0, 8]
+])
+
+commander = DroneCommander(fp_points)
 
 
 def saturate(u, llimit, ulimit):
@@ -49,7 +57,7 @@ while not(end_state): # t < P.t_end:  # main simulation loop
 
         forces, end_state = commander.update(drone.state)
         F, taux, tauy, tauz = forces
-        tlimit = 100.0
+        tlimit = 2.0
 
         u = np.array([
             [(F-4*P.b_thrust)/(4*P.m_thrust) - tauz/(4*P.m_rot*P.mu_r) + (np.sqrt(2)*taux)/(4*P.d*P.m_thrust) - (np.sqrt(2)*tauy)/(4*P.d*P.m_thrust)],

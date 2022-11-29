@@ -8,7 +8,7 @@ import typing
 
 
 class DroneCommander:
-    def __init__(self):
+    def __init__(self, flight_plan_points):
         # Initialize Controllers
         hcontroller = FeedbackLoop(P.Kh, P.krh, P.Kh, ki=P.kih, sample_rate=P.Ts)
         psicontroller = FeedbackLoop(P.Kpsi, P.krpsi, P.Kpsi, ki=P.kipsi, sample_rate=P.Ts)
@@ -21,33 +21,46 @@ class DroneCommander:
 
         # Initialize States
         takeoff_state = TakeoffState(controllers, 1.1, 2)
-        climb_state = ClimbState(hcontroller, 8)
-        cruise_state_1 = CruiseState(controllers, 8, NEXT_STATE='CRUISE2')
-        cruise_state_2 = CruiseState(controllers, 8, STATE_NAME='CRUISE2', NEXT_STATE='CRUISE3')
-        cruise_state_3 = CruiseState(controllers, 8, STATE_NAME='CRUISE3')
+        climb_state = ClimbState(controllers, 8, 'AUTOCRUISE 0')
+
+        cruise_states, cruise_names = self.__generate_flight_plan(flight_plan_points, controllers)
+
         descent_state = DescentState(controllers, 0.1)
         landing_state = LandingState(0.99)
         landed_state = LandedState()
 
-        cruise_state_1.set_x(-4)
-        cruise_state_1.set_y(-4)
-
-        cruise_state_2.set_x(4)
-        cruise_state_2.set_y(4)
-
-        cruise_state_3.set_x(0)
-        cruise_state_3.set_y(0)
-
         self.state_machine = StateMachine()
         self.state_machine.add_state('TAKEOFF', takeoff_state)
         self.state_machine.add_state('CLIMB', climb_state)
-        self.state_machine.add_state('CRUISE', cruise_state_1)
-        self.state_machine.add_state('CRUISE2', cruise_state_2)
-        self.state_machine.add_state('CRUISE3', cruise_state_3)
+
+        for ind, i in enumerate(cruise_states):
+            self.state_machine.add_state(cruise_names[ind], i)
+
         self.state_machine.add_state('DESCENT', descent_state)
         self.state_machine.add_state('LANDING', landing_state)
         self.state_machine.add_state('LANDED', landed_state, True)
+
         self.state_machine.set_start('TAKEOFF')
+
+    def __generate_flight_plan(self, points: np.ndarray[float], controllers: list[FeedbackLoop], state_after: str='DESCENT'):
+        states = []
+        state_names = []
+        for ind, point in enumerate(points):
+            state_name = f'AUTOCRUISE {ind}'
+            if ind == len(points) - 1:
+                next_state = state_after
+            else:
+                next_state = f'AUTOCRUISE {ind + 1}'
+
+            new_state = CruiseState(controllers, 0, state_name, next_state)
+
+            new_state.set_x(point[0])
+            new_state.set_y(point[1])
+            new_state.set_z(point[2])
+
+            states.append(new_state)
+            state_names.append(state_name)
+        return(states, state_names)
 
 
     def update(self, states):

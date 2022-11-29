@@ -32,7 +32,7 @@ class dataPlotter:
         self.handle = []
         self.handle.append(myPlot(self.ax[0], ylabel='Positions (m)', title='Drone Data'))
         self.handle.append(myPlot(self.ax[1], ylabel='Angles (deg)'))
-        self.handle.append(myPlot(self.ax[2], ylabel='Thrusts (v)'))
+        self.handle.append(myPlot(self.ax[2], ylabel='Throttle (%)'))
 
     def update(self, t, states, u, tlimit, zref):
         '''

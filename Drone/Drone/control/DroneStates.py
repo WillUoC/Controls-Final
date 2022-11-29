@@ -63,10 +63,11 @@ class TakeoffState(State):
             return('TAKEOFF', Forces)
 
 class ClimbState(State):
-    def __init__(self, h_controller: FeedbackLoop, h_target: float, TOLERANCE: float=1e-2):
+    def __init__(self, controllers: list[FeedbackLoop], h_target: float, NEXT_STATE: str='CRUISE', TOLERANCE: float=1e-2):
+        super().__init__(controllers)
         self.h_ref = h_target
-        self.h_controller = h_controller
         self.TOLERANCE = TOLERANCE
+        self.NEXT_STATE = NEXT_STATE
     
     def update(self, states: np.ndarray[float]):
         x = np.array([
@@ -88,7 +89,7 @@ class ClimbState(State):
 
         if np.abs(x.item(0) - self.h_ref) < self.TOLERANCE:
             logging.info('Switching to cruise')
-            return('CRUISE', Forces)  # TODO: Change to cruise state when implemented
+            return(self.NEXT_STATE, Forces)  # TODO: Change to cruise state when implemented
         else:
             return('CLIMB', Forces)
 
@@ -122,8 +123,8 @@ class CruiseState(State):
         if self.flag:
             self.psi_ref = np.arctan2((self.y_ref - states.item(1)), (self.x_ref - states.item(0)))
             self.flag = False
-            print(f'Commanded Psi: {self.psi_ref*180/np.pi}')
-            print(f'Drone Integrator: {self.x_controller.integrator}, {self.y_controller.integrator}')
+            logging.info(f'Commanded Psi: {self.psi_ref*180/np.pi}')
+            logging.info(f'Drone Integrator: {self.x_controller.integrator}, {self.y_controller.integrator}')
 
         psi_rot = np.array([
             [ np.cos(states.item(5)), np.sin(states.item(5)), 0.0],
@@ -151,11 +152,6 @@ class CruiseState(State):
             [0.0]
         ])
 
-        # print('=================================================================')
-        # print(f'relative target ({x_ref.item(0) - pos.item(0)}, {x_ref.item(1) - pos.item(1)})')
-        # print(f'relative position ({pos.item(0)}, {pos.item(1)})')
-        # print(f'relative velocity ({posdot.item(0)}, {posdot.item(1)})')
-
         angles = np.array([
             [states.item(3)],
             [states.item(4)],
@@ -178,8 +174,6 @@ class CruiseState(State):
         tauy = self.alpha_controller.update(np.array([[self.alpha_ref]]), np.array([[angles.item(1)],[angledots.item(1)]]))
         taux = self.theta_controller.update(np.array([[self.theta_ref]]), np.array([[angles.item(0)],[angledots.item(0)]]))
 
-        # taux, tauy, tauz = np.reshape(psi_rot @ np.array([[taux],[tauy],[tauz]]), (3,))
-
         Forces = np.array([
             [F],
             [taux],
@@ -189,9 +183,9 @@ class CruiseState(State):
 
         if np.abs(states.item(2) - self.h_ref) < self.TOLERANCE and np.abs(states.item(0) - self.x_ref) < self.TOLERANCE and np.abs(states.item(1) - self.y_ref) < self.TOLERANCE:
             logging.info(f"Switching to {self.NEXT_STATE}")
-            self.x_controller.reset_integrator()
-            self.y_controller.reset_integrator()
-            self.psi_controller.reset_integrator()
+            # self.x_controller.reset_integrator()
+            # self.y_controller.reset_integrator()
+            # self.psi_controller.reset_integrator()
             return(self.NEXT_STATE, Forces)
         else:
             return(self.STATE_NAME, Forces)
