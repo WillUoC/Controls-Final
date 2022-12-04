@@ -19,15 +19,46 @@ dataPlot = dataPlotter()
 animation = DroneAnimation()
 drone = DroneDynamics()
 
-fp_points = np.array([
-    [-4, -4, 8],
-    [4, 4, 8],
-    [4, -4, 8],
-    [-4, 4, 8],
-    [0, 0, 8]
+def generate_lemniscate(a, height=5, res=100):
+    points = np.zeros((res, 3))
+    for i in range(res):
+        t = (i+1)/res*2*np.pi
+        x, y, z = ((a*np.cos(t))/(1+np.sin(t)**2), (a*np.sin(t)*np.cos(t))/(1+np.sin(t)**2), height)
+        points[i, :] = [x, y, z]
+    
+    c = a/np.sqrt(2)  # Focal distance
+    L = 7.416*c  # Arc-length
+
+    tolerance = L/(res)
+
+    return(points, tolerance)
+
+
+fig8_points, trajectory_tolerance = generate_lemniscate(4, 5, 20)
+
+print(fig8_points)
+
+waypoints = np.array([
+    # [-4, -4, 8],
+    # [4, 4, 8],
+    [4, -4, 5],
+    [-4, 4, 5],
+    [0, 0, 5],
+    [4, 0, 5]
 ])
 
-commander = DroneCommander(fp_points)
+waypoint2 = np.array([[0, 0, 5]])
+
+trajectory_points = fig8_points
+
+flight_plan = [
+    (waypoints, "WAYPOINT"),
+    (fig8_points, "TRAJECTORY"),
+    (waypoint2, "WAYPOINT")
+]
+
+
+commander = DroneCommander(flight_plan, trajectory_tolerance)
 
 
 def saturate(u, llimit, ulimit):
@@ -56,6 +87,8 @@ while not(end_state): # t < P.t_end:  # main simulation loop
         drone.update(u)
 
         forces, end_state = commander.update(drone.state)
+        if end_state: break
+        
         F, taux, tauy, tauz = forces
         tlimit = 2.0
 
@@ -73,6 +106,7 @@ while not(end_state): # t < P.t_end:  # main simulation loop
     animation.update(drone.state)
     dataPlot.update(t, drone.state, u, tlimit, 0.0)
     plt.pause(P.Ts)
+
 
 # Keeps the program from closing until the user presses a button.
 print('Press key to close')

@@ -1,8 +1,11 @@
 import logging
-from .FullStateFeedback import FeedbackLoop
-from .. import DroneParam as P
 from abc import ABC, abstractmethod
+
 import numpy as np
+
+from .. import DroneParam as P
+from .FullStateFeedback import FeedbackLoop
+
 
 class State(ABC):
 
@@ -58,16 +61,15 @@ class TakeoffState(State):
 
         if h >= self.climb_height:
             logging.info('Switching to climb...')
-            return('CLIMB', Forces)
+            return(True, Forces)
         else:
-            return('TAKEOFF', Forces)
+            return(False, Forces)
 
 class ClimbState(State):
-    def __init__(self, controllers: list[FeedbackLoop], h_target: float, NEXT_STATE: str='CRUISE', TOLERANCE: float=1e-2):
+    def __init__(self, controllers: list[FeedbackLoop], h_target: float, TOLERANCE: float=1e-2):
         super().__init__(controllers)
         self.h_ref = h_target
         self.TOLERANCE = TOLERANCE
-        self.NEXT_STATE = NEXT_STATE
     
     def update(self, states: np.ndarray[float]):
         x = np.array([
@@ -89,26 +91,24 @@ class ClimbState(State):
 
         if np.abs(x.item(0) - self.h_ref) < self.TOLERANCE:
             logging.info('Switching to cruise')
-            return(self.NEXT_STATE, Forces)  # TODO: Change to cruise state when implemented
+            return(True, Forces)
         else:
-            return('CLIMB', Forces)
+            return(False, Forces)
 
 class CruiseState(State):
-    def __init__(self, controllers: list[FeedbackLoop], h_target: float, STATE_NAME: str='CRUISE', NEXT_STATE: str='DESCENT', TOLERANCE: float=1e-2):
-        self.h_ref = h_target
+    def __init__(self, controllers: list[FeedbackLoop], coordinate: tuple[float, float, float], TOLERANCE: float=1e-2):
         self.psi_ref = 0.0
         self.alpha_ref = 0.0
         self.theta_ref = 0.0
 
-        self.x_ref = 0.0
-        self.y_ref = 0.0
+        self.x_ref = coordinate[0]
+        self.y_ref = coordinate[1]
+        self.h_ref = coordinate[2]
 
         self.flag = True
 
         super().__init__(controllers)
         self.TOLERANCE = TOLERANCE
-        self.NEXT_STATE = NEXT_STATE
-        self.STATE_NAME = STATE_NAME
 
     def set_x(self, x):
         self.x_ref = x
@@ -127,7 +127,7 @@ class CruiseState(State):
             logging.info(f'Drone Integrator: {self.x_controller.integrator}, {self.y_controller.integrator}')
 
         psi_rot = np.array([
-            [ np.cos(states.item(5)), np.sin(states.item(5)), 0.0],
+            [np.cos(states.item(5)), np.sin(states.item(5)), 0.0],
             [-np.sin(states.item(5)), np.cos(states.item(5)), 0.0],
             [0.0, 0.0, 1.0]
         ])
@@ -182,14 +182,94 @@ class CruiseState(State):
         ])
 
         if np.abs(states.item(2) - self.h_ref) < self.TOLERANCE and np.abs(states.item(0) - self.x_ref) < self.TOLERANCE and np.abs(states.item(1) - self.y_ref) < self.TOLERANCE:
-            logging.info(f"Switching to {self.NEXT_STATE}")
-            # self.x_controller.reset_integrator()
-            # self.y_controller.reset_integrator()
-            # self.psi_controller.reset_integrator()
-            return(self.NEXT_STATE, Forces)
+            logging.info(f"Switching to next state...")
+            self.x_controller.reset_integrator()
+            self.y_controller.reset_integrator()
+            return(True, Forces)
         else:
-            return(self.STATE_NAME, Forces)
+            return(False, Forces)
 
+class FlightState(State):
+    def __init__(self, controllers: list[FeedbackLoop], coordinates: np.ndarray, TOLERANCE: float=1e-2):
+        super().__init__(controllers)
+        self.psi_ref = 0.0
+        self.alpha_ref = 0.0
+        self.theta_ref = 0.0
+
+        self.psi_tolerance = 1e-2
+
+        self.target_coordinates = coordinates
+
+        self.TOLERANCE = TOLERANCE
+        self.coordinate_index = 0
+
+    def update(self, states: np.ndarray[float]):
+        self.psi_ref = 0.0
+
+        self.x_ref, self.y_ref, self.h_ref = self.target_coordinates[self.coordinate_index]
+
+        psi_rot = np.array([
+            [np.cos(states.item(5)), np.sin(states.item(5)), 0.0],
+            [-np.sin(states.item(5)), np.cos(states.item(5)), 0.0],
+            [0.0, 0.0, 1.0]
+        ])
+
+        x_ref = psi_rot @ np.array([
+            [self.x_ref],
+            [self.y_ref],
+            [0.0]
+        ])
+
+
+        pos = psi_rot @ np.array([
+            [states.item(0)],
+            [states.item(1)],
+            [0.0]
+        ])
+
+
+        posdot = psi_rot @ np.array([
+            [states.item(6)],
+            [states.item(7)],
+            [0.0]
+        ])
+
+        angles = np.array([
+            [states.item(3)],
+            [states.item(4)],
+            [states.item(5)]
+        ])
+
+        angledots = np.array([
+            [states.item(9)],
+            [states.item(10)],
+            [states.item(11)]
+        ])
+
+        F = self.h_controller.update_int(np.array([[self.h_ref]]), np.array([[states.item(2)],[states.item(8)]]))
+
+        if np.abs(states.item(5) - self.psi_ref) < self.psi_tolerance:
+            self.alpha_ref = self.x_controller.update_int(np.array([[x_ref.item(0)]]), np.array([[pos.item(0)], [posdot.item(0)]]))
+            self.theta_ref = self.y_controller.update_int(np.array([[x_ref.item(1)]]), np.array([[pos.item(1)], [posdot.item(1)]]))
+
+        tauz = self.psi_controller.update_int(np.array([[self.psi_ref]]), np.array([[angles.item(2)],[angledots.item(2)]]))
+        tauy = self.alpha_controller.update(np.array([[self.alpha_ref]]), np.array([[angles.item(1)],[angledots.item(1)]]))
+        taux = self.theta_controller.update(np.array([[self.theta_ref]]), np.array([[angles.item(0)],[angledots.item(0)]]))
+
+        Forces = np.array([
+            [F],
+            [taux],
+            [tauy],
+            [tauz]
+        ])
+
+        if np.abs(states.item(2) - self.h_ref) < self.TOLERANCE and np.abs(states.item(0) - self.x_ref) < self.TOLERANCE and np.abs(states.item(1) - self.y_ref) < self.TOLERANCE:
+            self.coordinate_index += 1
+            if self.coordinate_index > len(self.target_coordinates)-1:
+                logging.info(f"Switching to next state...")
+                return(True, Forces)
+            
+        return(False, Forces)
 class DescentState(State):
     def __init__(self, controllers: list[FeedbackLoop], h_target: float=0.0, TOLERANCE: float=1e-3):
         super().__init__(controllers)
@@ -237,9 +317,9 @@ class DescentState(State):
 
         if np.abs(states.item(2) - self.h_ref) < self.TOLERANCE and np.abs(states.item(0) - self.x_ref) < self.TOLERANCE and np.abs(states.item(1) - self.y_ref) < self.TOLERANCE:            
             logging.info('Switching to landing')
-            return('LANDING', Forces)  # TODO: Change to cruise state when implemented
+            return(True, Forces)  # TODO: Change to cruise state when implemented
         else:
-            return('DESCENT', Forces)
+            return(False, Forces)
 
 class LandingState(State):
     def __init__(self, FORCE_SCALE):
@@ -261,9 +341,9 @@ class LandingState(State):
 
         if h >= self.climb_height:
             logging.info('Landed')
-            return('LANDED', Forces)
+            return(True, Forces)
         else:
-            return('LANDING', Forces)
+            return(False, Forces)
 
 class LandedState(State):
     def __init__(self):
@@ -277,4 +357,4 @@ class LandedState(State):
             [0]
         ])
 
-        return('LANDED', forces)
+        return(True, forces)
