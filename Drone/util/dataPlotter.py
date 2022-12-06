@@ -8,7 +8,7 @@ class dataPlotter:
     def __init__(self):
         # Number of subplots = num_of_rows*num_of_cols
         self.num_rows = 3    # Number of subplot rows
-        self.num_cols = 1    # Number of subplot columns
+        self.num_cols = 3    # Number of subplot columns
 
         # Crete figure and axes handles
         self.fig, self.ax = plt.subplots(self.num_rows, self.num_cols, sharex=True)
@@ -30,9 +30,17 @@ class dataPlotter:
 
         # create a handle for every subplot.
         self.handle = []
-        self.handle.append(myPlot(self.ax[0], ylabel='Positions (m)', title='Drone Data'))
-        self.handle.append(myPlot(self.ax[1], ylabel='Angles (deg)'))
-        self.handle.append(myPlot(self.ax[2], ylabel='Thrusts (v)'))
+        self.handle.append(myPlot(self.ax[0,0], ylabel='Position (x)', title='Position Data'))
+        self.handle.append(myPlot(self.ax[1,0], ylabel='Position (y)'))
+        self.handle.append(myPlot(self.ax[2,0], ylabel='Position (z)'))
+        self.handle.append(myPlot(self.ax[0,1], ylabel='theta', title='Angle Data'))
+        self.handle.append(myPlot(self.ax[1,1], ylabel='alpha'))
+        self.handle.append(myPlot(self.ax[2,1], ylabel='psi'))
+        self.handle.append(myPlot(self.ax[1,2], ylabel='Thrusts'))
+#        self.handle = []
+#        self.handle.append(myPlot(self.ax[0], ylabel='Positions (m)', title='Drone Data'))
+#       self.handle.append(myPlot(self.ax[1], ylabel='Angles (deg)'))
+#        self.handle.append(myPlot(self.ax[2], ylabel='Thrusts (v)'))
 
     def update(self, t, states, u, tlimit, zref):
         '''
@@ -55,9 +63,16 @@ class dataPlotter:
         self.tlimit_history.append(tlimit)
 
         # update the plots with associated histories
-        self.handle[0].update(self.time_history, [self.xpos_history, self.ypos_history, self.zpos_history, self.zref_history])
-        self.handle[1].update(self.time_history, [self.theta_history, self.alpha_history, self.psi_history])
-        self.handle[2].update(self.time_history, [self.thrust1_history, self.thrust2_history, self.thrust3_history, self.thrust4_history])
+        self.handle[0].update(self.time_history, [self.xpos_history]) #hi will
+        self.handle[1].update(self.time_history, [self.ypos_history]) #add the commanded positions if you can!
+        self.handle[2].update(self.time_history, [self.zpos_history])
+        self.handle[3].update(self.time_history, [self.alpha_history]) #and angles? is this commanded?
+        self.handle[4].update(self.time_history, [self.theta_history])
+        self.handle[5].update(self.time_history, [self.psi_history])
+        self.handle[6].update(self.time_history, [self.thrust1_history, self.thrust2_history, self.thrust3_history, self.thrust4_history])
+   #     self.handle[0].update(self.time_history, [self.xpos_history, self.ypos_history, self.zpos_history, self.zref_history])
+   #     self.handle[1].update(self.time_history, [self.theta_history, self.alpha_history, self.psi_history])
+   #     self.handle[2].update(self.time_history, [self.thrust1_history, self.thrust2_history, self.thrust3_history, self.thrust4_history])
 
 
 class myPlot:
@@ -128,5 +143,3 @@ class myPlot:
         # Adjusts the axis to fit all of the data
         self.ax.relim()
         self.ax.autoscale()
-           
-
