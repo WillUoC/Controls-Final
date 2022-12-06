@@ -36,8 +36,6 @@ def generate_lemniscate(a, height=5, res=100):
 
 fig8_points, trajectory_tolerance = generate_lemniscate(4, 5, 20)
 
-print(fig8_points)
-
 waypoints = np.array([
     # [-4, -4, 8],
     # [4, 4, 8],
