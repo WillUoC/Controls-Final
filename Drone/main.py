@@ -9,7 +9,7 @@ from Drone.DroneCommander import DroneCommander
 import logging
 
 # Initialize Logging
-logging.basicConfig(level=logging.INFO)
+# logging.basicConfig(level=logging.)
 
 # instantiate reference input classes
 reference = signalGenerator(amplitude=1, frequency=1/15)

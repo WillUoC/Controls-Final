@@ -275,7 +275,7 @@ des_poles_y = np.roots(des_char_poly_y)
 
 # H loop
 if np.linalg.matrix_rank(cnt.ctrb(Ahi, Bhi)) != np.size(Ahi, 1):
-    logging.info("The system is not controllable")
+    print("The system is not controllable")
     
 else:
     K_temp = cnt.place(Ahi, Bhi, des_poles_h)
@@ -285,20 +285,20 @@ else:
     Kh2 = cnt.place(Ah, Bh, des_poles_h2)
     krh = -1.0/(Crh @ np.linalg.inv(Ah - Bh @ np.reshape(Kh, (1, 2))) @ Bh)
 
-logging.info("\n=== H Gains ===")
-logging.info('K:')
-logging.info(Kh)
-logging.info('K2:')
-logging.info(Kh2)
-logging.info('Ki:')
-logging.info(kih)
-logging.info('Kr')
-logging.info(krh)
+print("\n=== H Gains ===")
+print('K:')
+print(Kh)
+print('K2:')
+print(Kh2)
+print('Ki:')
+print(kih)
+print('Kr')
+print(krh)
 
 
 # Psi loop
 if np.linalg.matrix_rank(cnt.ctrb(Aipsi, Bipsi)) != np.size(Aipsi, 1):
-    logging.info("The system is not controllable")
+    print("The system is not controllable")
 else:
     K_temp = cnt.place(Aipsi, Bipsi, des_poles_psi)
     Kpsi = K_temp[0, 0:2]
@@ -306,19 +306,19 @@ else:
     Kpsi2 = cnt.place(Apsi, Bpsi, des_poles_psi2)
     krpsi = -1.0/(Crpsi @ np.linalg.inv(Apsi - Bpsi @ np.reshape(Kpsi, (1, 2))) @ Bpsi)
 
-logging.info("\n=== Psi Gains ===")
-logging.info('K:')
-logging.info(Kpsi)
-logging.info('K2:')
-logging.info(Kpsi2)
-logging.info('Ki:')
-logging.info(kipsi)
-logging.info('Kr')
-logging.info(krpsi)
+print("\n=== Psi Gains ===")
+print('K:')
+print(Kpsi)
+print('K2:')
+print(Kpsi2)
+print('Ki:')
+print(kipsi)
+print('Kr')
+print(krpsi)
 
 # Alpha loop
 if np.linalg.matrix_rank(cnt.ctrb(Aial, Bial)) != np.size(Aial, 1):
-    logging.info("The system is not controllable")
+    print("The system is not controllable")
 else:
     K_temp = cnt.place(Aial, Bial, des_poles_al)
     Kal = K_temp[0, 0:2]
@@ -326,19 +326,19 @@ else:
     Kal2 = cnt.place(Aal, Bal, des_poles_al2)
     kral = -1.0/(Cral @ np.linalg.inv(Aal - Bal @ np.reshape(Kal, (1, 2))) @ Bal)
 
-logging.info("\n=== Alpha Gains ===")
-logging.info('K:')
-logging.info(Kal)
-logging.info('K2:')
-logging.info(Kal2)
-logging.info('Ki:')
-logging.info(kial)
-logging.info('Kr')
-logging.info(kral)
+print("\n=== Alpha Gains ===")
+print('K:')
+print(Kal)
+print('K2:')
+print(Kal2)
+print('Ki:')
+print(kial)
+print('Kr')
+print(kral)
 
 # Theta loop
 if np.linalg.matrix_rank(cnt.ctrb(Aith, Bith)) != np.size(Aith, 1):
-    logging.info("The system is not controllable")
+    print("The system is not controllable")
 else:
     K_temp = cnt.place(Aith, Bith, des_poles_th)
     Kth = K_temp[0, 0:2]
@@ -346,40 +346,41 @@ else:
     Kth2 = cnt.place(Ath, Bth, des_poles_th2)
     krth = -1.0/(Crth @ np.linalg.inv(Ath - Bth @ np.reshape(Kth, (1, 2))) @ Bth)
 
-logging.info("\n=== Theta Gains ===")
-logging.info('K:')
-logging.info(Kth)
-logging.info('K2:')
-logging.info(Kth2)
-logging.info('Ki:')
-logging.info(kith)
-logging.info('Kr')
-logging.info(krth)
+print("\n=== Theta Gains ===")
+print('K:')
+print(Kth)
+print('K2:')
+print(Kth2)
+print('Ki:')
+print(kith)
+print('Kr')
+print(krth)
 
 # x loop
 if np.linalg.matrix_rank(cnt.ctrb(Aix, Bix)) != np.size(Aix, 1):
-    logging.info("The system is not controllable")
+    print("The system is not controllable")
 else:
     K_temp = cnt.place(Aix, Bix, des_poles_x)
     Kx = K_temp[0, 0:2]
     kix = K_temp[0, 2]
     krx = -1.0/(Crx @ np.linalg.inv(Ax - Bx @ np.reshape(Kx, (1, 2))) @ Bx)
 
-logging.info("\n=== X Gains ===")
-logging.info('K:')
-logging.info(Kx)
-logging.info('Ki:')
-logging.info(kix)
-logging.info('Kr')
-logging.info(krx)
+print("\n=== X Gains ===")
+print('K:')
+print(Kx)
+print('Ki:')
+print(kix)
+print('Kr')
+print(krx)
 
 # y loop
 if np.linalg.matrix_rank(cnt.ctrb(Aiy, Biy)) != np.size(Aiy, 1):
-    logging.info("The system is not controllable")
+    print("The system is not controllable")
 else:
-    logging.info(f'Desired poles in y: {des_poles_y}')
+    print(f'Desired poles in y: {des_poles_y}')
     K_temp = cnt.place(Aiy, Biy, des_poles_y)
     Ky = K_temp[0, 0:2]
     kiy = K_temp[0, 2]
     kry = -1.0/(Cry @ np.linalg.inv(Ay - By @ np.reshape(Ky, (1, 2))) @ By)
 
+    
